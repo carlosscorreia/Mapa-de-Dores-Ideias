@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapa de Dores & Ideias</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0e0e0f;
+    --surface: #161618;
+    --border: #2a2a2e;
+    --text: #e8e8e8;
+    --muted: #888;
+    --accent: #f0c040;
+
+    --c1: #ff6b6b; /* Saúde */
+    --c2: #a78bfa; /* Saúde Mental */
+    --c3: #34d399; /* Idosos & Cuidados */
+    --c4: #60a5fa; /* Infância & Família */
+    --c5: #fb923c; /* Trabalho & Carreira */
+    --c6: #f472b6; /* Segurança */
+    --c7: #4ade80; /* Educação */
+    --c8: #38bdf8; /* Finanças */
+    --c9: #e879f9; /* Relacionamentos */
+    --c10: #facc15; /* Burocracia */
+    --c11: #94a3b8; /* Cidade & Cotidiano */
+    --c12: #fb7185; /* Indústria & Agro */
+    --c13: #6ee7b7; /* Criadores */
+    --c14: #c084fc; /* Invisibilidade Social */
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    padding: 3rem 2rem 2rem;
+    border-bottom: 1px solid var(--border);
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    line-height: 1;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+
+  header p {
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+
+  .stats {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .stat span:first-child {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--accent);
+    font-family: 'DM Serif Display', serif;
+  }
+
+  .stat span:last-child {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .controls {
+    padding: 1.5rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .controls label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-right: 0.25rem;
+  }
+
+  .filter-btn {
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .filter-btn:hover { border-color: var(--accent); color: var(--text); }
+  .filter-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+
+  .search-wrap {
+    margin-left: auto;
+    position: relative;
+  }
+
+  .search-wrap input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.4rem 1rem 0.4rem 2.2rem;
+    border-radius: 999px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    width: 220px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-wrap::before { content: '⌕'; position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 1rem; pointer-events: none; }
+
+  .main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+
+  .theme-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .theme-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  .theme-card.hidden { display: none; }
+
+  .theme-header {
+    padding: 1rem 1.25rem 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .theme-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex;align-items:center;justify-content:center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .theme-title {
+    flex: 1;
+  }
+
+  .theme-title h2 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  .theme-title small {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.07);
+    color: var(--muted);
+  }
+
+  .chevron {
+    color: var(--muted);
+    font-size: 0.8rem;
+    transition: transform 0.2s;
+  }
+
+  .theme-card.open .chevron { transform: rotate(180deg); }
+
+  .theme-items {
+    display: none;
+    padding: 0.5rem 0;
+  }
+
+  .theme-card.open .theme-items { display: block; }
+
+  .item {
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  .item:last-child { border-bottom: none; }
+  .item:hover { background: rgba(255,255,255,0.04); }
+  .item.selected { background: rgba(240,192,64,0.07); border-left: 2px solid var(--accent); }
+
+  .item-text {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #ccc;
+  }
+
+  .item-text strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .item-tags {
+    margin-top: 0.4rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+
+  .tag {
+    font-size: 0.68rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.06);
+    color: var(--muted);
+  }
+
+  .tag.cross { background: rgba(240,192,64,0.12); color: var(--accent); }
+
+  .empty-state {
+    display: none;
+    grid-column: 1/-1;
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--muted);
+  }
+
+  .empty-state.visible { display: block; }
+
+  .color-bar {
+    height: 3px;
+    width: 100%;
+  }
+
+  .item.highlight { background: rgba(240,192,64,0.05); }
+
+  mark {
+    background: rgba(240,192,64,0.3);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+  }
+
+  @media (max-width: 600px) {
+    .main { grid-template-columns: 1fr; padding: 1rem; }
+    .controls { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Mapa de Dores & Ideias</h1>
+  <p>Todas as dores organizadas por tema — clique para expandir, pesquise, filtre.</p>
+  <div class="stats">
+    <div class="stat"><span id="total-count">0</span><span>Dores mapeadas</span></div>
+    <div class="stat"><span id="theme-count">0</span><span>Temas</span></div>
+    <div class="stat"><span id="visible-count">0</span><span>Visíveis agora</span></div>
+  </div>
+</header>
+
+<div class="controls">
+  <label>Filtrar:</label>
+  <button class="filter-btn active" onclick="filterAll(this)">Todos</button>
+  <button class="filter-btn" onclick="filterCross(this)" title="Dores que conectam múltiplos temas">🔗 Conexões</button>
+  <div class="search-wrap">
+    <input type="text" id="search" placeholder="Buscar dore..." oninput="doSearch(this.value)">
+  </div>
+</div>
+
+<div class="main" id="main"></div>
+<div class="empty-state" id="empty">Nenhuma dor encontrada. Tente outro termo.</div>
+
+<script>
+const themes = [
+  {
+    id: 'saude-fisica',
+    icon: '🫀',
+    color: 'var(--c1)',
+    title: 'Saúde Física & Monitoramento',
+    subtitle: 'Corpo, doenças e falta de acompanhamento',
+    items: [
+      { text: 'Pessoas com <strong>diabetes</strong> precisam furar o dedo várias vezes ao dia — sem monitoramento contínuo e não invasivo.', tags: ['tecnologia vestível', 'chronic care'] },
+      { text: 'Pessoas com <strong>pressão alta</strong> esquecem de medir porque o aparelho é grande e inconveniente.', tags: ['device', 'prevenção'] },
+      { text: 'Pessoas que dormem horas suficientes mas <strong>acordam exaustas</strong> sem entender por quê.', tags: ['diagnóstico', 'sono'] },
+      { text: '<strong>Atletas amadores</strong> treinam sem acompanhamento e se machucam por excesso ou técnica errada.', tags: ['coaching', 'wearable'] },
+      { text: '<strong>Grávidas no terceiro trimestre</strong> ficam ansiosas entre consultas sem saber se o bebê está bem.', tags: ['monitoramento', 'saúde materna'] },
+      { text: 'Pessoas em <strong>quimioterapia</strong> continuam expostas a risco de infecção em ambientes públicos sem alerta.', tags: ['alerta', 'imunossuprimidos'] },
+      { text: 'Pessoas com <strong>AVC ou infarto iminente</strong> sentiram sinais horas antes mas não reconheceram.', tags: ['detecção precoce', 'alerta'] },
+      { text: 'Pessoas com <strong>dor crônica</strong> — costas, cabeça, articulações — cujo sofrimento não é levado a sério.', tags: ['invisibilidade médica', 'crônico'] },
+      { text: 'Pessoas que só descobrem <strong>pressão alta, colesterol ou diabetes quando já está avançado</strong>.', tags: ['prevenção', 'acesso a exames'] },
+      { text: 'Mulheres que não entendem os <strong>próprios ciclos hormonais</strong> e como afetam humor, energia e produtividade.', tags: ['autoconhecimento', 'saúde feminina'] },
+      { text: 'Pessoas que vivem <strong>anos sem diagnóstico</strong> — indo de médico em médico sendo ignoradas.', tags: ['sistema de saúde', 'diagnóstico'] },
+    ]
+  },
+  {
+    id: 'saude-mental',
+    icon: '🧠',
+    color: 'var(--c2)',
+    title: 'Saúde Mental & Bem-Estar Emocional',
+    subtitle: 'Ansiedade, burnout, depressão, isolamento',
+    items: [
+      { text: 'Pessoas com <strong>ansiedade severa</strong> têm crises em público e não conseguem comunicar o que está acontecendo.', tags: ['crise', 'comunicação de emergência'] },
+      { text: 'Pessoas em <strong>burnout</strong> só percebem que chegaram ao limite quando já colapsaram.', tags: ['prevenção', 'monitoramento'] },
+      { text: '<strong>Adolescentes com depressão</strong> não conseguem verbalizar o que sentem para os pais.', tags: ['comunicação', 'família'] },
+      { text: 'Pessoas que moram sozinhas e passam por <strong>episódios de saúde mental grave</strong> sem ninguém para perceber.', tags: ['isolamento', 'segurança'] },
+      { text: 'Pessoas que passaram por <strong>trauma e parecem bem por fora</strong> mas nunca processaram.', tags: ['trauma', 'saúde silenciosa'] },
+      { text: '<strong>Homens</strong> que nunca foram ensinados a identificar ou nomear o que sentem.', tags: ['saúde masculina', 'vocabulário emocional'] },
+    ]
+  },
+  {
+    id: 'medicacao',
+    icon: '💊',
+    color: 'var(--c3)',
+    title: 'Medicação & Adesão ao Tratamento',
+    subtitle: 'Esquecer doses, múltiplos remédios, acesso',
+    items: [
+      { text: 'Pessoas que tomam <strong>medicamento diário</strong> esquecem doses e não sabem confirmar se realmente tomaram.', tags: ['lembrete inteligente', 'confirmação'] },
+      { text: '<strong>Idosos tomam em média 5+ remédios por dia</strong> com horários distintos — a confusão é inevitável.', tags: ['idosos', 'polifarmácia'] },
+      { text: 'Médico prescreve remédio, <strong>farmácia não tem</strong>, plano não resolve — paciente fica dias sem medicação.', tags: ['burocracia', 'acesso'] },
+      { text: 'Pacientes com <strong>doenças crônicas que dependem do sistema público</strong> ficam meses em fila para conseguir remédio.', tags: ['sistema público', 'acesso', 'saúde crônica'] },
+    ]
+  },
+  {
+    id: 'seguranca',
+    icon: '🛡️',
+    color: 'var(--c6)',
+    title: 'Segurança Pessoal & Física',
+    subtitle: 'Risco, socorro discreto, acidentes de trabalho',
+    items: [
+      { text: '<strong>Mulheres em situação de risco</strong> não conseguem pedir socorro de forma discreta — tirar o celular pode piorar.', tags: ['SOS discreto', 'violência de gênero'] },
+      { text: '<strong>Trabalhadores em altura ou com máquinas pesadas</strong> ficam sonolentos e nada detecta antes do acidente.', tags: ['sonolência', 'workplace safety'] },
+      { text: 'Vítimas de <strong>violência doméstica</strong> que registram BO não sabem o andamento — se há medida protetiva ativa.', tags: ['sistema judiciário', 'burocracia', 'segurança'] },
+      { text: '<strong>Motoristas de caminhão</strong> dirigem longas horas — a sonolência ao volante é invisível até ser tarde demais.', tags: ['sonolência', 'rodovias'] },
+      { text: 'Trabalhadores em <strong>fábricas expostos a ruído excessivo</strong> sem monitoramento da exposição acumulada.', tags: ['EPI', 'saúde ocupacional'] },
+    ]
+  },
+  {
+    id: 'idosos',
+    icon: '👴',
+    color: 'var(--c3)',
+    title: 'Idosos & Cuidado com a Longevidade',
+    subtitle: 'Quedas, medicação, digital, cuidadores',
+    items: [
+      { text: '<strong>Idosos que moram sozinhos caem</strong> e ficam no chão por horas até alguém aparecer.', tags: ['detecção de queda', 'wearable'] },
+      { text: 'Filhos de idosos que <strong>moram em outra cidade</strong> vivem com culpa e preocupação constante.', tags: ['monitoramento remoto', 'família'] },
+      { text: 'Idosos com <strong>mobilidade reduzida</strong> têm dificuldade com smartphones — excluídos digitalmente.', tags: ['acessibilidade', 'UX'] },
+      { text: 'Cuidadores de idosos com <strong>Alzheimer</strong> vivem com medo de o familiar sair e se perder.', tags: ['GPS', 'rastreamento seguro'] },
+      { text: 'Pessoas que cuidam de <strong>familiar doente em casa</strong> por anos sem folga, sem reconhecimento.', tags: ['cuidador invisível', 'saúde do cuidador'] },
+    ]
+  },
+  {
+    id: 'infancia-familia',
+    icon: '👶',
+    color: 'var(--c4)',
+    title: 'Infância, Família & Parentalidade',
+    subtitle: 'Crianças, pais, escola, proteção',
+    items: [
+      { text: '<strong>Crianças alérgicas</strong> vão a festas e cantinas sem que ninguém ao redor saiba da alergia.', tags: ['alerta de alergia', 'saúde infantil'] },
+      { text: '<strong>Crianças pequenas se perdem</strong> em shoppings e parques — o desespero dos pais é real.', tags: ['rastreamento', 'GPS'] },
+      { text: '<strong>Bebês choram por razões diferentes</strong> e pais de primeira viagem sofrem sem conseguir decifrar.', tags: ['IA parental', 'suporte'] },
+      { text: 'Crianças com <strong>autismo têm crises em ambientes barulhentos</strong> — imprevisibilidade torna qualquer saída uma aposta.', tags: ['neurodiversidade', 'suporte familiar'] },
+      { text: 'Crianças que sofrem <strong>bullying raramente contam para os pais</strong>.', tags: ['comunicação', 'proteção infantil'] },
+      { text: 'Pais não conseguem monitorar <strong>conteúdo digital dos filhos</strong> de forma equilibrada.', tags: ['controle parental', 'saúde digital'] },
+      { text: 'Quando uma <strong>criança some ou é sequestrada</strong>, não existe sistema que centralize a busca nas primeiras horas.', tags: ['emergência', 'sistemas públicos'] },
+    ]
+  },
+  {
+    id: 'rotina-produtividade',
+    icon: '⏱️',
+    color: 'var(--c5)',
+    title: 'Rotina, Produtividade & Autogestão',
+    subtitle: 'Tempo, foco, hábitos, pausas',
+    items: [
+      { text: 'Pessoas com <strong>TDAH ou ansiedade</strong> perdem a noção do tempo e percebem tarde demais que passaram horas em algo.', tags: ['wearable', 'TDAH', 'foco'] },
+      { text: 'Pessoas que ficam horas no computador <strong>negligenciam pausas, hidratação e postura</strong>.', tags: ['saúde digital', 'hábitos'] },
+      { text: 'Pessoas que <strong>repetem os mesmos erros</strong> em relacionamentos, trabalho e hábitos sem identificar o padrão.', tags: ['autoconhecimento', 'reflexão'] },
+      { text: 'Pessoas que vivem tão ocupadas que <strong>não lembram de momentos importantes</strong> da própria vida.', tags: ['memória', 'presença'] },
+    ]
+  },
+  {
+    id: 'acessibilidade',
+    icon: '♿',
+    color: 'var(--c14)',
+    title: 'Acessibilidade & Inclusão',
+    subtitle: 'Deficiência visual, motora, digital',
+    items: [
+      { text: 'Pessoas com <strong>deficiência visual</strong> dependem de fones para notificações — isola do ambiente e chama atenção.', tags: ['haptic feedback', 'inclusão'] },
+      { text: 'Pessoas com <strong>tremor ou Parkinson</strong> têm dificuldade com touchscreens — dependência de interfaces que o corpo não consegue usar.', tags: ['UX', 'acessibilidade motora'] },
+      { text: 'Idosos com mobilidade reduzida <strong>excluídos das interfaces digitais</strong>.', tags: ['UX para idosos', 'inclusão digital'] },
+      { text: 'Pessoas com <strong>doenças raras passam anos sem diagnóstico</strong> porque médicos nunca viram aquele caso.', tags: ['sistema de saúde', 'diagnóstico raro'] },
+    ]
+  },
+  {
+    id: 'educacao',
+    icon: '📚',
+    color: 'var(--c7)',
+    title: 'Educação & Aprendizado',
+    subtitle: 'Alunos, pais, adultos, acesso, método',
+    items: [
+      { text: 'Alunos que <strong>se perdem nas primeiras semanas</strong> e ficam com vergonha de perguntar enquanto a turma avança.', tags: ['ritmo personalizado', 'edtech'] },
+      { text: 'Pais que <strong>não entendem mais o conteúdo</strong> escolar e se sentem inúteis no papel de apoio.', tags: ['educação familiar', 'suporte'] },
+      { text: 'Adultos que <strong>voltam a estudar anos depois</strong> sem saber por onde começar.', tags: ['EAD', 'requalificação'] },
+      { text: 'Pessoas que <strong>estudam horas sem reter</strong> — nunca ensinaram a técnica certa de aprender.', tags: ['método', 'metacognição'] },
+      { text: '<strong>Jovens de periferia com talento</strong> que nunca chegam a desenvolver por falta de acesso e referência.', tags: ['equidade', 'oportunidade'] },
+      { text: 'Calouros que chegam <strong>sem base suficiente</strong> — ficam para trás na primeira semana e nunca recuperam.', tags: ['nivelamento', 'ensino superior'] },
+    ]
+  },
+  {
+    id: 'financas',
+    icon: '💸',
+    color: 'var(--c8)',
+    title: 'Finanças, Crédito & Sobrevivência Econômica',
+    subtitle: 'Gastos invisíveis, exclusão financeira, golpes',
+    items: [
+      { text: 'Pessoas que recebem salário, pagam contas e <strong>não entendem para onde o dinheiro foi</strong>.', tags: ['fintech', 'controle financeiro'] },
+      { text: '<strong>Trabalhadores informais</strong> invisíveis para o sistema financeiro — sem acesso a crédito.', tags: ['inclusão financeira', 'informalidade'] },
+      { text: 'Pessoas que <strong>caem em golpes financeiros</strong> — fraudes sofisticadas — com vergonha de contar.', tags: ['fraude', 'proteção'] },
+      { text: 'Pessoas que precisam de <strong>ajuda jurídica simples</strong> mas não sabem que têm direito à assistência gratuita.', tags: ['acesso à justiça', 'direitos'] },
+      { text: '<strong>Microempreendedores</strong> que fecham por não conseguir gerir financeiro, estoque e atendimento sozinhos.', tags: ['MEI', 'gestão', 'pequeno negócio'] },
+      { text: 'Trabalhadores demitidos que <strong>não recebem tudo que têm direito</strong> — horas extras, FGTS — e não sabem cobrar.', tags: ['direitos trabalhistas', 'burocracia'] },
+      { text: 'Produtor rural que <strong>renegocia dívida sem entender o contrato</strong> e descobre que a dívida cresceu.', tags: ['educação financeira', 'agro'] },
+    ]
+  },
+  {
+    id: 'relacionamentos',
+    icon: '❤️',
+    color: 'var(--c9)',
+    title: 'Relacionamentos, Comunicação & Vínculos',
+    subtitle: 'Casais, solidão, amizades, comunicação difícil',
+    items: [
+      { text: 'Casais que moram juntos há anos e <strong>param de se comunicar de verdade</strong> — as conversas viram logística.', tags: ['relacionamento', 'comunicação'] },
+      { text: 'Pessoas que <strong>perderam alguém e nunca disseram o que precisavam dizer</strong>.', tags: ['luto', 'comunicação'] },
+      { text: '<strong>Amizades que morrem não por briga mas por esquecimento</strong> — a vida acelera e as pessoas somem.', tags: ['vínculos', 'manutenção de relações'] },
+      { text: 'Pessoas que <strong>sentem solidão mesmo rodeadas de gente</strong> — não ser visto de verdade por ninguém.', tags: ['solidão', 'conexão'] },
+      { text: '<strong>Filhos adultos que não sabem conversar com os pais</strong> sobre dinheiro, saúde ou morte.', tags: ['família', 'conversas difíceis'] },
+      { text: 'Pessoas que vivem relacionamentos onde <strong>nenhuma conversa vai fundo</strong> — fala-se de tudo menos do que importa.', tags: ['superficialidade', 'intimidade'] },
+      { text: 'Pessoas que se <strong>mudam sozinhas e descobrem que fazer amigos adultos é quase impossível</strong>.', tags: ['vínculos', 'solidão urbana'] },
+    ]
+  },
+  {
+    id: 'burocracia',
+    icon: '📋',
+    color: 'var(--c10)',
+    title: 'Burocracia, Sistema & Processos Quebrados',
+    subtitle: 'Morte, mecânico, aluguel, INSS, legalidade',
+    items: [
+      { text: 'Quando uma pessoa morre, <strong>cancelar contas e assinaturas não tem processo centralizado</strong> — família resolve meses de burocracia de luto.', tags: ['morte', 'pós-morte digital'] },
+      { text: 'Leva o carro à oficina e <strong>não sabe se está sendo enganado</strong> — paga o que mandam sem opção.', tags: ['transparência', 'consumidor'] },
+      { text: 'Morador de apartamento alugado com <strong>reparo urgente preso no jogo de responsabilidade</strong> locador vs. locatário.', tags: ['aluguel', 'serviços'] },
+      { text: 'Vítimas de <strong>violência doméstica não sabem o andamento do processo</strong> — sistema não comunica nada.', tags: ['segurança', 'sistema judiciário'] },
+      { text: 'Pessoas que <strong>sofreram golpe financeiro</strong> não sabem os passos corretos e ninguém centraliza a solução.', tags: ['fraude', 'recuperação'] },
+      { text: 'Pacientes que precisam de <strong>perícia do INSS</strong> esperam meses por consulta de 10 minutos.', tags: ['INSS', 'sistema público'] },
+      { text: 'Donos de pequenos negócios afogados em <strong>MEI, alvará, vigilância sanitária, bombeiros</strong> — cada um com sistema diferente.', tags: ['burocracia', 'empreendedorismo'] },
+    ]
+  },
+  {
+    id: 'trabalho',
+    icon: '💼',
+    color: 'var(--c5)',
+    title: 'Trabalho, Carreira & Propósito',
+    subtitle: 'Ambiente tóxico, identidade, visibilidade, transição',
+    items: [
+      { text: 'Pessoas que <strong>odeiam o que fazem mas não conseguem largar</strong> por medo de frustrar a família ou perder estabilidade.', tags: ['carreira', 'transição'] },
+      { text: 'Profissionais <strong>competentes que não conseguem se vender</strong> — o currículo não passa, a entrevista trava.', tags: ['visibilidade', 'carreira'] },
+      { text: 'Pessoas em <strong>ambientes tóxicos que duvidam de si mesmas</strong> — gaslighting corporativo.', tags: ['ambiente tóxico', 'saúde mental'] },
+      { text: 'Trabalhadores que <strong>se aposentam e perdem o sentido</strong> — identidade estava toda no cargo.', tags: ['identidade', 'luto de carreira'] },
+      { text: '<strong>Freelancers e autônomos</strong> sem controle claro de finanças e horas trabalhadas.', tags: ['gestão', 'autônomo'] },
+      { text: 'Profissionais de <strong>saúde em plantões de 12h sem monitoramento do próprio corpo</strong>.', tags: ['saúde ocupacional', 'healthcare'] },
+    ]
+  },
+  {
+    id: 'trabalhadores-comuns',
+    icon: '🦺',
+    color: 'var(--c12)',
+    title: 'Trabalhadores de Linha de Frente',
+    subtitle: 'Cozinheiro, motoboy, professor, auxiliar, eletricista',
+    items: [
+      { text: '<strong>Cozinheiro de restaurante</strong> trabalha machucado porque a cozinha não funciona sem ele.', tags: ['saúde ocupacional', 'informalidade'] },
+      { text: '<strong>Motorista de app</strong> dirige 12h/dia, come no carro, sem banheiro garantido, sem pausa real.', tags: ['gig economy', 'saúde'] },
+      { text: '<strong>Professora com 35 alunos</strong> de níveis diferentes, sem auxiliar — não consegue dar atenção especial.', tags: ['educação pública', 'sobrecarga'] },
+      { text: '<strong>Recepcionista de clínica</strong> atende telefone e paciente ao mesmo tempo — um dos dois é sempre mal atendido.', tags: ['sobrecarga', 'automação'] },
+      { text: '<strong>Motoboy entrega na chuva</strong> porque se não entregar não recebe — sem seguro se cair.', tags: ['gig economy', 'proteção'] },
+      { text: '<strong>Auxiliar de enfermagem</strong> cuida de mais pacientes que deveria — erro vem do sistema, o nome é dela.', tags: ['sistema de saúde', 'saúde ocupacional'] },
+      { text: '<strong>Eletricista autônomo</strong> fica sem receber porque o cliente enrola e não tem contrato para cobrar.', tags: ['autônomo', 'proteção jurídica'] },
+      { text: '<strong>Trabalhadores noturnos</strong> vivem num fuso diferente — não participam da vida social, família, consultas.', tags: ['saúde do trabalhador', 'isolamento'] },
+    ]
+  },
+  {
+    id: 'industria',
+    icon: '🏭',
+    color: 'var(--c12)',
+    title: 'Indústria & Manufatura',
+    subtitle: 'Manutenção, dados, conhecimento tácito, EPI',
+    items: [
+      { text: '<strong>Manutenção preventiva existe no papel mas é reativa na prática</strong> — sempre apagando incêndio quando a peça já estragou.', tags: ['IoT', 'manutenção preditiva'] },
+      { text: 'Chão de fábrica <strong>gera dados que ficam perdidos</strong> — decisão ainda é tomada no feeling do supervisor.', tags: ['dados industriais', 'analytics'] },
+      { text: 'Quando <strong>funcionário chave falta, ninguém sabe exatamente como ele fazia</strong> — conhecimento na cabeça, não documentado.', tags: ['conhecimento tácito', 'processos'] },
+      { text: '<strong>Matéria prima com defeito só é descoberta no final</strong> do processo — retrabalho e desperdício.', tags: ['qualidade', 'rastreabilidade'] },
+      { text: 'Pequenas indústrias não sabem em <strong>tempo real quanto cada produto custa de verdade</strong> para produzir.', tags: ['custeio', 'gestão industrial'] },
+      { text: '<strong>Troca de turno crítica comunicada verbalmente ou em caderno</strong> — problema anterior vira surpresa para o próximo.', tags: ['comunicação', 'processos'] },
+    ]
+  },
+  {
+    id: 'agro',
+    icon: '🌾',
+    color: 'var(--c12)',
+    title: 'Agronegócio & Pequeno Produtor',
+    subtitle: 'Preço, defensivos, clima, venda, dívida',
+    items: [
+      { text: '<strong>Pequeno produtor vende para atravessador</strong> pelo preço que ele oferece — sem acesso à informação.', tags: ['marketplace', 'agro'] },
+      { text: '<strong>Aplica defensivo na lavoura inteira</strong> sem saber qual área está com praga — gasto duplo e contaminação.', tags: ['precisão', 'agtech'] },
+      { text: '<strong>Trabalhador rural exposto a produto químico</strong> sem monitoramento real da exposição.', tags: ['EPI', 'saúde ocupacional', 'agro'] },
+      { text: 'Pequeno produtor <strong>não consegue vender direto para supermercado</strong> — exigências incompatíveis com sua realidade.', tags: ['distribuição', 'regulação'] },
+      { text: 'Produtor <strong>perde colheita por clima sem ferramenta</strong> que combine previsão localizada com momento certo de agir.', tags: ['clima', 'agtech'] },
+      { text: '<strong>Colheita boa mas sem armazém disponível</strong> — produto estraga enquanto logística é resolvida de última hora.', tags: ['logística', 'armazenagem'] },
+    ]
+  },
+  {
+    id: 'vendas',
+    icon: '🛒',
+    color: 'var(--c5)',
+    title: 'Vendas & Comércio',
+    subtitle: 'Vendedor externo, lojista, representante',
+    items: [
+      { text: '<strong>Vendedor externo fecha pedido no papel ou WhatsApp</strong> e lança no sistema à noite — perde dado, erra pedido.', tags: ['CRM', 'mobilidade'] },
+      { text: 'Vendedor <strong>ouve objeção e não sabe responder</strong> porque nunca teve treinamento real em processo de venda.', tags: ['treinamento', 'vendas'] },
+      { text: '<strong>Representante comercial passa horas atualizando tabela de preço</strong> — tempo que devia gastar vendendo.', tags: ['automação', 'operacional'] },
+      { text: 'Vendedor de serviço complexo: <strong>simplifica demais → parece desonesto; explica demais → cliente trava</strong>.', tags: ['comunicação', 'vendas consultivas'] },
+      { text: 'Vendedor que <strong>bate meta e zera a carteira</strong> no ciclo seguinte por não prospectar enquanto fecha.', tags: ['pipeline', 'gestão comercial'] },
+      { text: '<strong>Pequeno lojista vende por WhatsApp, Instagram e loja física</strong> com estoque manual — vende o que não tem.', tags: ['omnichannel', 'estoque', 'PME'] },
+    ]
+  },
+  {
+    id: 'pets',
+    icon: '🐾',
+    color: 'var(--c7)',
+    title: 'Animais de Estimação',
+    subtitle: 'Monitoramento, envelhecimento, fuga',
+    items: [
+      { text: 'Donos de pets <strong>não sabem se o animal está ansioso, machucado ou em perigo</strong> quando estão no trabalho.', tags: ['monitoramento', 'IoT pet'] },
+      { text: '<strong>Cães idosos ou doentes têm piora gradual</strong> que donos não percebem por estarem acostumados.', tags: ['saúde animal', 'detecção'] },
+      { text: '<strong>Pets que fogem não são encontrados</strong> — coleira com plaquinha ainda é a solução principal e é ineficaz.', tags: ['GPS', 'rastreamento'] },
+    ]
+  },
+  {
+    id: 'cidade',
+    icon: '🏙️',
+    color: 'var(--c11)',
+    title: 'Cidade, Transporte & Cotidiano Urbano',
+    subtitle: 'Transporte, poluição, alertas, vizinhos',
+    items: [
+      { text: '<strong>Moradores de áreas de risco</strong> não recebem alertas antecipados confiáveis de enchente ou deslizamento.', tags: ['alerta', 'infraestrutura'] },
+      { text: 'Pessoas em cidades com <strong>alta poluição não sabem a qualidade do ar</strong> no momento que saem.', tags: ['saúde ambiental', 'dados urbanos'] },
+      { text: '<strong>Ciclistas e pedestres</strong> não têm como reportar situações de risco de forma que gere resposta do poder público.', tags: ['civic tech', 'segurança'] },
+      { text: 'Pessoas que <strong>dependem de ônibus e nunca sabem se vai chegar</strong> — incerteza consome horas da vida por semana.', tags: ['mobilidade', 'transporte público'] },
+      { text: 'Moradores de <strong>cidades pequenas que se deslocam longas distâncias</strong> para serviços básicos de saúde e banco.', tags: ['acesso', 'interior'] },
+      { text: 'Pessoas que <strong>moram em apartamento e nunca conhecem os vizinhos</strong> — solidão urbana a centímetros de outros.', tags: ['comunidade', 'solidão'] },
+    ]
+  },
+  {
+    id: 'alimentacao',
+    icon: '🍽️',
+    color: 'var(--c7)',
+    title: 'Alimentação & Hábitos',
+    subtitle: 'Alergia, dieta, cozinhar, intolerância',
+    items: [
+      { text: 'Pessoas com <strong>intolerância ou alergia comem fora sem confirmar ingredientes</strong> — desconfiança constante e risco real.', tags: ['alergia', 'restaurante'] },
+      { text: 'Pessoas que tentam manter dieta <strong>sabotam o processo sem visibilidade</strong> do que consomem ao longo do dia.', tags: ['saúde', 'hábitos'] },
+      { text: 'Pessoas que vivem sozinhas <strong>não cozinham por falta de praticidade</strong> — ciclo de alimentação ruim afeta saúde e humor.', tags: ['moradores solo', 'alimentação'] },
+      { text: 'Consumidores compram <strong>produtos "sustentáveis" sem como verificar</strong> se é verdade ou marketing.', tags: ['greenwashing', 'consumo consciente'] },
+    ]
+  },
+  {
+    id: 'luto-perda',
+    icon: '🕯️',
+    color: 'var(--c9)',
+    title: 'Luto, Perdas & Transições de Vida',
+    subtitle: 'Morte, divórcio, demissão, identidade',
+    items: [
+      { text: 'Pessoas que <strong>perdem filho, cônjuge ou pai e voltam para casa no dia seguinte sem suporte</strong> estruturado.', tags: ['luto', 'suporte emocional'] },
+      { text: 'Pessoas após <strong>divórcio reconstruindo identidade, rotina e autoestima ao mesmo tempo</strong> — sem manual.', tags: ['transição', 'reconstrução'] },
+      { text: 'Trabalhadores <strong>demitidos após anos e sentem que perderam identidade</strong>, não só emprego.', tags: ['luto de carreira', 'identidade'] },
+      { text: 'Jovens que <strong>terminam a faculdade e entram em colapso</strong> — toda a estrutura some de uma vez.', tags: ['transição', 'saúde mental'] },
+      { text: 'Mulheres que <strong>dedicaram anos à maternidade e não sabem mais quem são</strong> quando os filhos crescem.', tags: ['identidade', 'ninho vazio'] },
+      { text: 'Pessoas que <strong>foram diagnosticadas com doença grave e não sabem como contar</strong> para a família.', tags: ['comunicação difícil', 'saúde'] },
+    ]
+  },
+  {
+    id: 'invisibilidade',
+    icon: '👁️',
+    color: 'var(--c14)',
+    title: 'Invisibilidade Social & Exclusão',
+    subtitle: 'Rua, imigração, doenças raras, LGBTQ+',
+    items: [
+      { text: 'Pessoas em <strong>situação de rua ignoradas</strong> porque ninguém sabe como ajudar de forma concreta e segura.', tags: ['exclusão social', 'civic tech'] },
+      { text: '<strong>Imigrantes sem português</strong> navegando burocracia, saúde e trabalho num idioma que não dominam.', tags: ['imigração', 'barreiras'] },
+      { text: '<strong>Pessoas com doenças raras passam anos sem diagnóstico</strong> — um problema que o sistema não sabe nomear.', tags: ['diagnóstico raro', 'sistema de saúde'] },
+      { text: 'Pessoas <strong>LGBTQ+ em cidades pequenas sem espaço seguro</strong> para ser quem são.', tags: ['segurança', 'comunidade'] },
+      { text: '<strong>Pessoas fingem para a família que ainda estão empregadas</strong> — vergonha impede de pedir ajuda.', tags: ['silêncio', 'saúde mental'] },
+    ]
+  },
+  {
+    id: 'criadores',
+    icon: '🎨',
+    color: 'var(--c13)',
+    title: 'Criadores, Artesãos & Empreendedores Individuais',
+    subtitle: 'Conteúdo, artesanato, hobby, produto bom sem venda',
+    items: [
+      { text: '<strong>Pequenos criadores passam horas produzindo conteúdo</strong> e sentem que gritam no vazio — algoritmo afoga quem não tem audiência prévia.', tags: ['distribuição', 'criadores'] },
+      { text: '<strong>Artesãos e cozinheiros caseiros com produto real e bom</strong> não conseguem vender por não saber navegar redes ou precificação.', tags: ['PME', 'digital', 'venda'] },
+      { text: 'Pessoas que <strong>param de fazer o hobby que amam</strong> porque a vida adulta "não tem tempo para isso".', tags: ['bem-estar', 'identidade'] },
+      { text: 'Pessoas com <strong>ideia boa que não conseguem explicar</strong> — a ideia morre por falta de comunicação.', tags: ['comunicação', 'pitch'] },
+    ]
+  },
+];
+
+// Cross-cutting tags that appear in 3+ themes
+const crossTags = ['monitoramento', 'burocracia', 'saúde mental', 'comunicação', 'isolamento', 'acesso', 'sistema de saúde'];
+
+function render(filterFn, highlightTerm) {
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+  let visibleCards = 0;
+  let visibleItems = 0;
+
+  themes.forEach(theme => {
+    const matchingItems = theme.items.filter(item => filterFn(item, theme));
+    if (matchingItems.length === 0) return;
+    visibleCards++;
+
+    const card = document.createElement('div');
+    card.className = 'theme-card';
+    card.id = 'card-' + theme.id;
+
+    const colorStyle = `background:${theme.color}22;color:${theme.color}`;
+    const bar = `<div class="color-bar" style="background:${theme.color}"></div>`;
+
+    card.innerHTML = `
+      ${bar}
+      <div class="theme-header" onclick="toggleCard('${theme.id}')">
+        <div class="theme-icon" style="${colorStyle}">${theme.icon}</div>
+        <div class="theme-title">
+          <h2>${theme.title}</h2>
+          <small>${theme.subtitle}</small>
+        </div>
+        <span class="badge">${matchingItems.length}</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="theme-items">
+        ${matchingItems.map((item, i) => {
+          let text = item.text;
+          if (highlightTerm) {
+            const re = new RegExp(`(${highlightTerm.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+            text = text.replace(re, '<mark>$1</mark>');
+          }
+          const tagsHtml = item.tags.map(t => {
+            const isCross = item.tags.filter(t2 => t2 === t).length > 0;
+            return `<span class="tag">${t}</span>`;
+          }).join('');
+          visibleItems++;
+          return `<div class="item"><div class="item-text">${text}</div><div class="item-tags">${tagsHtml}</div></div>`;
+        }).join('')}
+      </div>
+    `;
+
+    main.appendChild(card);
+  });
+
+  document.getElementById('visible-count').textContent = visibleItems;
+  document.getElementById('empty').className = visibleCards === 0 ? 'empty-state visible' : 'empty-state';
+
+  // Auto-open if few cards
+  if (visibleCards <= 3) {
+    document.querySelectorAll('.theme-card').forEach(c => c.classList.add('open'));
+  }
+}
+
+function toggleCard(id) {
+  const card = document.getElementById('card-' + id);
+  card.classList.toggle('open');
+}
+
+let currentFilter = 'all';
+let currentSearch = '';
+
+function applyFilters() {
+  render(item => {
+    const searchOk = !currentSearch || item.text.toLowerCase().includes(currentSearch.toLowerCase()) || item.tags.some(t => t.toLowerCase().includes(currentSearch.toLowerCase()));
+    const crossOk = currentFilter !== 'cross' || item.tags.some(t => crossTags.includes(t));
+    return searchOk && crossOk;
+  }, currentSearch);
+}
+
+function filterAll(btn) {
+  currentFilter = 'all';
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function filterCross(btn) {
+  currentFilter = 'cross';
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function doSearch(val) {
+  currentSearch = val;
+  applyFilters();
+  if (val.length > 1) {
+    document.querySelectorAll('.theme-card').forEach(c => c.classList.add('open'));
+  }
+}
+
+// Init stats
+document.getElementById('theme-count').textContent = themes.length;
+let totalItems = 0;
+themes.forEach(t => totalItems += t.items.length);
+document.getElementById('total-count').textContent = totalItems;
+document.getElementById('visible-count').textContent = totalItems;
+
+// Initial render
+render(() => true, '');
+</script>
+</body>
+</html>
